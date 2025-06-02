@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>스며들다</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+</head>
+<body>
+  <script>
+    //========================
+    // 공통 이미지 변수 선언
+    //========================
+    // 인트로용
+    let bgImageIntro;
+    let textImageIntro;
+    let textAlpha = 0;
+    const fadeInDuration = 60; // 페이드 인에 걸리는 프레임 수 (약 1초)
+
+    // 애니메이션 A용
+    let earlyAHead,
+      earlyARightArm,
+      earlyALeftArm,
+      earlyABody,
+      earlyAFace,
+      happyAFace,
+      ARightArmV;
+    let moveABody,
+      moveARightArm,
+      moveALeftArm,
+      moveARightLeg,
+      moveALeftLeg,
+      moveHappyAFace,
+      moveSadAFace;
+    let currentStateA = "early";
+    let sadAStartFrame = 0;
+    let happyAStartFrame = 0;
+
+    // 애니메이션 B용
+    let BChair, earlyB, happyB, sadB, light, tears;
+    let currentStateB = "early";
+    let lightScale = 0.1;
+    let tearsY;
+
+    // 엔딩
+    // 크레딧에 표시할 텍스트 배열 (역할 \n 이름)
+    let credits = [
+      "Producer\nArt&Tech Team5",
+      "Director\nProf. Jung ki-chul",
+      "Writer\nChoi, Jang, Son",
+      "aniA\nChoi Yoon-ha",
+      "aniB\nChoi Yoon-ha",
+      "backgroundA\nJang Yoon-ah",
+      "backgroundB\nJang Yoon-ah",
+      "Music\n choi, jang, son",
+      "Edit\nAll",
+      "Maker\nTeam05",
+      "Thank you for watching"
+    ];
+    
+    let yPos;                       // 크레딧 전체 그룹의 기준 Y 위치
+    const baseSpacing = 120;          // 각 항목 간 세로 간격
+    const speed = 1.2;               // 스크롤 속도 (픽셀/프레임)
+    const minTextSize = 18;          // 상단에서의 최소 텍스트 크기
+    const maxTextSize = 48;          // 하단에서의 최대 텍스트 크기
+    const fadeZone = 150;            // 페이드가 시작되는 영역 두께
+
+    //— 전체 상태: 'intro', 'phaseA', 'phaseB'
+    //    frameCount 기준: 
+    //    0 ~ 180  → intro (3초),
+    //    181 ~ 420 → phaseA (4초),
+    //    421 ~     → phaseB (무한)
+    function preload() {
+      //— 인트로 이미지 로드
+      bgImageIntro = loadImage("인스타그램.png");
+      textImageIntro = loadImage("스며들다.png");
+
+      //— 애니메이션 A 이미지 로드
+      earlyAHead = loadImage("earlyAHead.png");
+      earlyARightArm = loadImage("earlyARightArm.png");
+      earlyALeftArm = loadImage("earlyALeftArm.png");
+      earlyABody = loadImage("earlyABody.png");
+      earlyAFace = loadImage("earlyAFace.png");
+      happyAFace = loadImage("happyAFace.png");
+      ARightArmV = loadImage("ARightArmV.png");
+      moveABody = loadImage("moveABody.png");
+      moveARightArm = loadImage("moveARightArm.png");
+      moveALeftArm = loadImage("moveALeftArm.png");
+      moveARightLeg = loadImage("moveARightLeg.png");
+      moveALeftLeg = loadImage("moveALeftLeg.png");
+      moveHappyAFace = loadImage("moveHappyAFace.png");
+      moveSadAFace = loadImage("moveSadAFace.png");
+
+      //— 애니메이션 B 이미지 로드
+      BChair = loadImage("BChair.png");
+      earlyB = loadImage("earlyB.png");
+      happyB = loadImage("happyB.png");
+      sadB = loadImage("sadB.png");
+      light = loadImage("light.png");
+      tears = loadImage("tears.png");
+    }
+
+    function setup() {
+      // 캔버스를 600×600으로 고정
+      createCanvas(600, 800);
+      imageMode(CENTER);
+
+      yPos = height; // <-- 여기에 옮기세요
+      // B 애니메이션용 초기값
+      tearsY = height / 2;
+    }
+
+    function draw() {
+      if (frameCount <= 180) {
+        //========================
+        // 3초 동안 인트로
+        //========================
+        drawIntro();
+      } else if (frameCount <= 420) {
+        //========================
+        // 4초 동안 애니메이션 A
+        //========================
+        drawAnimateA();
+      } else if (frameCount <= 600) {
+        //========================
+        // 그 이후 애니메이션 B
+        //========================
+        drawAnimateB();
+      } else if (frameCount <= 2000) {
+
+        drawEnding();
+      }
+    }
+
+    //========================
+    // 인트로 그리기 (3초, 페이드 인 텍스트)
+    //========================
+    function drawIntro() {
+      background(0);
+
+      // 인스타그램 배경을 캔버스 전체에 맞춰서 그리기
+      image(bgImageIntro, width / 2, height / 2, width, height);
+
+      // 텍스트 페이드 인 로직 (첫 60프레임)
+      if (frameCount <= fadeInDuration) {
+        textAlpha = map(frameCount, 0, fadeInDuration, 0, 255);
+      } else {
+        textAlpha = 255;
+      }
+      push();
+      tint(255, textAlpha);
+      // '스며들다' 텍스트를 배경 중앙 근처에 배치
+      image(
+        textImageIntro,
+        width / 2,
+        height / 2 + height / 8,
+        textImageIntro.width / 2,
+        textImageIntro.height / 2
+      );
+      pop();
+    }
+
+    function drawEnding() {
+        // 그라데이션 배경: 위쪽은 짙은 파란색, 아래쪽은 검은색
+      for (let i = 0; i < height; i++) {
+        let inter = map(i, 0, height, 0, 1);
+        let c = lerpColor(color(0, 0, 50), color(0, 0, 0), inter);
+        stroke(c);
+        line(0, i, width, i);
+      }
+
+      // 크레딧 항목을 한 줄씩 그림
+      for (let i = 0; i < credits.length; i++) {
+        const y = yPos + i * baseSpacing;
+
+        // 화면에 보이는 영역인지 검사 (버퍼 포함)
+        if (y < -baseSpacing || y > height + baseSpacing) {
+          continue;
+        }
+
+        // 원근감을 위한 크기 계산
+        let sizeFactor = map(y, 0, height, 1.0, 1.5);
+        sizeFactor = constrain(sizeFactor, 1.0, 1.5);
+        const textSizeNow = lerp(minTextSize, maxTextSize, (sizeFactor - 0.6) / (1.4 - 0.6));
+
+        // X 좌표를 정확히 화면 중앙으로 고정
+        const x = width / 2;
+
+        noStroke();
+        fill(255);
+
+        // 역할과 이름 분리
+        const parts = credits[i].split("\n");
+        textSize(textSizeNow);
+
+        if (parts.length === 2) {
+          // 역할: 조금 작은 크기, 위로 배치
+          textSize(textSizeNow * 0.7);
+          text(parts[0], x, y - textSizeNow * 0.5);
+          // 이름: 기본 크기, 아래로 배치
+          textSize(textSizeNow * 0.6);
+          text(parts[1], x, y + textSizeNow * 0.5);
+        } else {
+          text(parts[0], x, y);
+        }
+      }
+
+      // 크레딧 스크롤
+      yPos -= speed;
+
+      // 마지막 항목이 상단 위로 완전히 사라지면 초기 위치로 재설정
+      const lastY = yPos + (credits.length - 1) * baseSpacing;
+      if (lastY < -fadeZone) {
+        yPos = height;
+      }
+    }
+
+    //========================
+    // 애니메이션 A 그리기 (4초)
+    //========================
+    function drawAnimateA() {
+      // A에서 'early', 'happy', 'sad' 상태 변환 로직
+      if (frameCount === 181) {
+        // A 애니메이션 시작 시점에 happy 상태로 전환
+        currentStateA = "happy";
+        happyAStartFrame = frameCount;
+      }
+
+      // 배경 대신 단색(흰색)으로 지우고, 캐릭터만 그림
+      background(255);
+      drawCharacterA();
+    }
+
+    function drawCharacterA() {
+      if (currentStateA === "early") {
+        drawEarlyA();
+      } else if (currentStateA === "happy") {
+        drawHappyA();
+      } else if (currentStateA === "sad") {
+        drawSadA();
+      }
+    }
+
+    function drawEarlyA() {
+      image(earlyAHead, width / 2, height / 2, 600, 600);
+      image(earlyARightArm, width / 2, height / 2, 600, 600);
+      image(earlyALeftArm, width / 2, height / 2, 600, 600);
+      image(earlyABody, width / 2, height / 2, 600, 600);
+      image(earlyAFace, width / 2, height / 2, 600, 600);
+    }
+
+    function drawHappyA() {
+      let moveTime = frameCount - happyAStartFrame;
+      if (moveTime < 60) {
+        // 첫 1초: early 상태 프레임을 그대로 그리기
+        image(earlyAHead, width / 2, height / 2, 600, 600);
+        image(earlyALeftArm, width / 2, height / 2, 600, 600);
+        image(ARightArmV, width / 2, height / 2, 600, 600);
+        image(earlyABody, width / 2, height / 2, 600, 600);
+        image(happyAFace, width / 2, height / 2, 600, 600);
+      } else {
+        // 1초 이후: 캐릭터를 오른쪽으로 이동시키며 애니메이션
+        let baseX = width / 2 + (moveTime - 60);
+        let armSwing = sin(frameCount * 0.1) * 0.4;
+        let legSwing = sin(frameCount * 0.1 + PI) * 0.4;
+
+        // 왼팔
+        push();
+        translate(baseX, height / 2);
+        translate(25, -15);
+        rotate(-armSwing);
+        image(moveALeftArm, -20, 15, 600, 600);
+        pop();
+
+        // 왼다리
+        push();
+        translate(baseX, height / 2);
+        translate(25, 100);
+        rotate(-legSwing);
+        image(moveALeftLeg, -20, -80, 600, 600);
+        pop();
+
+        // 오른다리
+        push();
+        translate(baseX, height / 2);
+        translate(25, 100);
+        rotate(legSwing);
+        image(moveARightLeg, -20, -80, 600, 600);
+        pop();
+
+        // 몸통 + 얼굴
+        image(moveABody, baseX, height / 2, 600, 600);
+        image(moveHappyAFace, baseX, height / 2, 600, 600);
+
+        // 오른팔
+        push();
+        translate(baseX, height / 2);
+        translate(25, -15);
+        rotate(armSwing);
+        image(moveARightArm, -20, 15, 600, 600);
+        pop();
+      }
+    }
+
+    function drawSadA() {
+      let moveTime = frameCount - sadAStartFrame;
+      let baseX = (width / 2 + (moveTime - 60)) * 1.5;
+      let armSwing = sin((frameCount - sadAStartFrame) * 0.1) * 0.4;
+      let legSwing = sin((frameCount - sadAStartFrame) * 0.1 + PI) * 0.4;
+
+      // 왼팔
+      push();
+      translate(baseX, height / 2);
+      translate(25, -15);
+      rotate(-armSwing);
+      image(moveALeftArm, -20, 15, 600, 600);
+      pop();
+
+      // 왼다리
+      push();
+      translate(baseX, height / 2);
+      translate(25, 100);
+      rotate(-legSwing);
+      image(moveALeftLeg, -20, -80, 600, 600);
+      pop();
+
+      // 오른다리
+      push();
+      translate(baseX, height / 2);
+      translate(25, 100);
+      rotate(legSwing);
+      image(moveARightLeg, -20, -80, 600, 600);
+      pop();
+
+      // 몸통 + 얼굴
+      image(moveABody, baseX, height / 2, 600, 600);
+      image(moveSadAFace, baseX, height / 2, 600, 600);
+
+      // 오른팔
+      push();
+      translate(baseX, height / 2);
+      translate(25, -15);
+      rotate(armSwing);
+      image(moveARightArm, -20, 15, 600, 600);
+      pop();
+    }
+
+    //========================
+    // 애니메이션 B 그리기
+    //========================
+    function drawAnimateB() {
+      // 첫 진입 시에 happyB 상태로 전환
+      if (frameCount === 421) {
+        currentStateB = "happy";
+        lightScale = 0.1;
+        tearsY = height / 2;
+      }
+
+      background(255);
+      updateAnimationB();
+      drawCharacterB();
+    }
+
+    function updateAnimationB() {
+      if (currentStateB === "happy") {
+        if (lightScale < 1.0) {
+          lightScale += 0.01; // 빛 점차 확대
+        }
+      } else {
+        lightScale = 0.1;
+      }
+
+      if (currentStateB === "sad") {
+        tearsY += 2;
+        if (tearsY > 500) {
+          tearsY = height / 2; // 눈물이 바닥 내려가면 초기 위치로 리셋
+        }
+      }
+    }
+
+    function drawCharacterB() {
+      if (currentStateB === "early") {
+        drawEarlyB();
+      } else if (currentStateB === "happy") {
+        drawHappyB();
+      } else if (currentStateB === "sad") {
+        drawSadB();
+      }
+    }
+
+    function drawEarlyB() {
+      image(BChair, width / 2, height / 2, 600, 600);
+      image(earlyB, width / 2, height / 2, 600, 600);
+    }
+
+    function drawHappyB() {
+      image(BChair, width / 2, height / 2, 600, 600);
+      let lightWidth = 600 * lightScale;
+      let lightHeight = 600 * lightScale;
+      image(light, width / 2, height / 2, lightWidth, lightHeight);
+      image(happyB, width / 2, height / 2, 600, 600);
+    }
+
+    function drawSadB() {
+      image(BChair, width / 2, height / 2, 600, 600);
+      image(sadB, width / 2, height / 2, 600, 600);
+      image(tears, width / 2, tearsY, 600, 600);
+    }
+
+    //— 마우스 클릭 이벤트 처리 (B에서는 클릭 시 상태 전환)
+    function mousePressed() {
+      if (frameCount > 420) {
+        // 애니메이션 B 구간 동안에만 클릭 처리
+        if (mouseX < width / 3) {
+          currentStateB = "happy";
+          lightScale = 0.1;
+        } else if (mouseX > (width / 3) * 2) {
+          currentStateB = "sad";
+          tearsY = height / 2;
+        } else {
+          currentStateB = "early";
+        }
+      }
+    }
+  </script>
+</body>
+</html>
